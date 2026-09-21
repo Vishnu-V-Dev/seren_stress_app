@@ -707,4 +707,4 @@ For GSR hardware and electrodermal activity measurement concepts, see the docume
 
 This project is intended for academic and experimental use.
 
-Add an explicit open-source license to the repository if redistribution, modification, or reuse is intended.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
