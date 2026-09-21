@@ -110,6 +110,42 @@ Stressed
 
 The application can subsequently represent the detected physiological response using multiple intensity levels for visualization and interpretation.
 
+### Four-Class Stress Classification
+
+The system classifies the processed GSR signal into four physiological stress-intensity categories:
+
+| Class         | Description                        |
+| ------------- | ---------------------------------- |
+| **Relaxed**   | Low observed physiological arousal |
+| **Medium**    | Moderate physiological arousal     |
+| **High**      | Elevated physiological arousal     |
+| **Very High** | Strong physiological arousal       |
+
+The classification pipeline is:
+
+```text
+Processed GSR Window
+        │
+        ▼
+ Feature Extraction
+        │
+        ▼
+ Feature Vector
+        │
+        ▼
+ Machine Learning Classifier
+        │
+        ├── Relaxed
+        ├── Medium
+        ├── High
+        └── Very High
+```
+
+The four classes are intended to represent different levels of GSR-associated physiological arousal. They should not be interpreted as clinical diagnoses or definitive measurements of psychological stress.
+
+Model performance should be evaluated separately for each class using metrics such as precision, recall, F1-score, and a confusion matrix.
+
+
 ### Interactive Visualization
 
 The Flutter Web interface provides graphical visualization of the acquired and processed GSR signal, allowing signal behavior to be inspected during and after acquisition.
