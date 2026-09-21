@@ -97,54 +97,59 @@ The current processing pipeline derives features including:
 
 These features form the input representation used by the machine learning inference pipeline.
 
-### Machine Learning Inference
+## Machine Learning
 
-The processed GSR feature vector is submitted to a machine learning inference service for physiological-state classification.
+SEREN uses a **Random Forest classifier** to classify each processed GSR recording into one of four ordered stress levels.
 
-The current implementation uses a binary classification stage representing:
+### Four-Class Classification
 
-```text
-Relaxed
-Stressed
-```
+The system uses the following four classes:
 
-The application can subsequently represent the detected physiological response using multiple intensity levels for visualization and interpretation.
-
-### Four-Class Stress Classification
-
-The system classifies the processed GSR signal into four physiological stress-intensity categories:
-
-| Class         | Description                        |
-| ------------- | ---------------------------------- |
-| **Relaxed**   | Low observed physiological arousal |
-| **Medium**    | Moderate physiological arousal     |
-| **High**      | Elevated physiological arousal     |
-| **Very High** | Strong physiological arousal       |
+| Class         | Description                          |
+| ------------- | ------------------------------------ |
+| **Relaxed**   | Lower observed physiological arousal |
+| **Medium**    | Moderate physiological arousal       |
+| **High**      | Elevated physiological arousal       |
+| **Very High** | High observed physiological arousal  |
 
 The classification pipeline is:
 
 ```text
-Processed GSR Window
+Processed GSR Signal
         │
         ▼
- Feature Extraction
+Kalman Filtering
         │
         ▼
- Feature Vector
+Min-Max Normalisation
         │
         ▼
- Machine Learning Classifier
+Feature Extraction
+        │
+        ├── Mean
+        ├── Variance
+        ├── Standard Deviation
+        ├── Slope
+        └── Peak Count
+        │
+        ▼
+Feature Vector
+        │
+        ▼
+Random Forest Classifier
         │
         ├── Relaxed
         ├── Medium
         ├── High
         └── Very High
+        │
+        ▼
+Predicted Stress Level
 ```
 
-The four classes are intended to represent different levels of GSR-associated physiological arousal. They should not be interpreted as clinical diagnoses or definitive measurements of psychological stress.
+Because the four classes are **ordered**, evaluation uses both conventional classification metrics and ordinal-aware measures. The reported metrics include accuracy, macro-averaged precision, recall, F1-score, mean absolute error (MAE), and quadratic weighted kappa (QWK).
 
-Model performance should be evaluated separately for each class using metrics such as precision, recall, F1-score, and a confusion matrix.
-
+The baseline evaluation achieved **95.2% accuracy**, with a **macro-averaged F1-score of 0.916** and a **quadratic weighted kappa of 0.74** on the 126-sample held-out split. These results should be interpreted in the context of the dataset limitations described below.
 
 ### Interactive Visualization
 
