@@ -1,215 +1,674 @@
-# Seren Stress App
+# Seren
 
-**A Real-Time Stress Detection System Using Galvanic Skin Response (GSR) and Flutter Web**
+## Real-Time GSR-Based Physiological Stress Monitoring System
 
----
+Seren is a real-time physiological monitoring system that combines **Galvanic Skin Response (GSR) sensing, signal processing, machine learning, and interactive visualization** to estimate stress-related physiological activity.
 
-# Abstract
+The system acquires GSR signals through an Arduino-connected sensor, streams the measurements to a Flutter Web application through a local Node.js communication layer, processes the signal, extracts statistical features, and sends the resulting feature vector to a machine learning inference service.
 
-Stress is a major physiological and psychological condition that affects human health and productivity. Recent advancements in biosensing technologies and software systems have enabled real-time monitoring of physiological signals for stress detection. This project presents **Seren Stress App**, a Flutter-based web application designed to analyze stress levels using **Galvanic Skin Response (GSR)** signals.
+The project is designed as an experimental and educational platform for exploring the relationship between electrodermal activity and stress-related physiological responses.
 
-The system uses a **GSR sensor connected to an Arduino microcontroller** to measure variations in skin conductance associated with sympathetic nervous system activity. The collected sensor data is transmitted to a **Flutter web application running on a PC through the Chrome browser**, where signal processing techniques such as **Kalman filtering, normalization, and statistical feature extraction** are applied. The processed data is then analyzed using a **machine learning model** to classify the user's physiological state as stressed or relaxed. The application also provides real-time visualization of the signal using interactive charts.
-
-This project demonstrates how physiological sensing and web-based software platforms can be integrated to develop a practical stress monitoring system.
+> **Research note:** Seren is a physiological signal analysis prototype and is not a medical diagnostic or clinical assessment device. GSR reflects electrodermal activity associated with sympathetic nervous system activation and may be influenced by factors other than psychological stress.
 
 ---
 
-# 1. Introduction
+## System Overview
 
-Stress detection using physiological signals has become an important research topic in biomedical engineering and human–computer interaction. One of the most reliable physiological indicators of stress is **Galvanic Skin Response (GSR)**, which measures variations in skin conductance caused by sweat gland activity controlled by the sympathetic nervous system.
+Seren follows an end-to-end physiological signal processing pipeline:
 
-The objective of this project is to develop a **real-time stress detection system** that integrates physiological sensing hardware with a **Flutter web-based analysis platform**. The system collects GSR signals using a sensor module connected to an Arduino board, processes the signals using filtering techniques, extracts meaningful features, and predicts stress levels using a machine learning model.
+```text
+GSR Sensor
+     │
+     ▼
+ Arduino Microcontroller
+     │
+     │ USB Serial
+     ▼
+ Node.js Communication Layer
+     │
+     │ WebSocket
+     ▼
+ Flutter Web Application
+     │
+     ├── Real-Time Visualization
+     ├── Signal Filtering
+     ├── Normalization
+     └── Feature Extraction
+             │
+             ▼
+      Machine Learning API
+             │
+             ▼
+      Physiological State
+             │
+             ▼
+       Session Analysis
+             │
+             ▼
+          Firebase
+```
 
-The application runs on a **PC using the Chrome browser**, providing a simple interface for monitoring and analyzing physiological stress signals.
-
----
-
-# 2. System Architecture
-
-The Seren Stress system consists of four main components:
-
-1. Physiological Signal Acquisition
-2. Signal Processing
-3. Feature Extraction
-4. Stress Classification and Visualization
-
----
-
-# 3. Hardware Components
-
-The hardware module is responsible for collecting physiological data from the user.
-
-### Components Used
-
-* Arduino Microcontroller
-* GSR Sensor Module
-* Skin Conductance Electrodes
-* USB Serial Communication
-
-### Working Principle
-
-The GSR sensor measures **changes in electrical conductivity of the skin**. When a person experiences stress or emotional arousal, sweat gland activity increases, which increases skin conductance.
-
-The Arduino reads the analog signal from the GSR sensor and converts it into digital values using the ADC. These values are transmitted to the software system for analysis.
-
----
-
-# 4. Signal Processing
-
-Physiological signals often contain noise due to environmental factors, sensor instability, and motion artifacts. Therefore, signal preprocessing is necessary.
-
-## 4.1 Kalman Filtering
-
-A **Kalman Filter** is implemented to smooth the raw GSR signal and reduce measurement noise. This recursive filter estimates the true signal state by combining previous predictions with new sensor measurements.
-
-## 4.2 Signal Normalization
-
-To ensure consistency across different sessions and subjects, the GSR signal is normalized using the following equation:
-
-GSR_normalized = (GSR − GSR_min) / (GSR_max − GSR_min)
-
-Normalization scales the values to a consistent range suitable for machine learning analysis.
+The architecture separates **signal acquisition, communication, signal processing, machine learning inference, and visualization**, allowing individual components to be developed and evaluated independently.
 
 ---
 
-# 5. Feature Extraction
+## Objectives
 
-After preprocessing, statistical features are extracted from the GSR signal. These features represent physiological characteristics that are useful for stress classification.
+The primary objectives of Seren are:
 
-### Extracted Features
+* Acquire GSR signals from a low-cost physiological sensor.
+* Stream physiological measurements in real time.
+* Reduce measurement noise using signal-processing techniques.
+* Extract meaningful statistical characteristics from GSR signals.
+* Apply a machine learning model for physiological state classification.
+* Provide real-time signal visualization.
+* Store and review previous measurement sessions.
+* Establish a modular foundation for future multi-sensor physiological analysis.
 
-* Mean GSR value
+---
+
+## Key Features
+
+### Real-Time GSR Acquisition
+
+GSR measurements are acquired through an Arduino-connected sensor and transmitted to the software system through USB serial communication.
+
+### Real-Time Signal Streaming
+
+A Node.js server receives the serial data and broadcasts measurements to connected clients using WebSockets.
+
+### Signal Processing
+
+The acquired signal undergoes preprocessing before classification, including:
+
+* Kalman filtering
+* Signal normalization
+* Statistical feature extraction
+
+### Feature Extraction
+
+The current processing pipeline derives features including:
+
+* Mean
 * Standard deviation
-* Signal variance
-* Peak amplitude
-* Signal slope / trend
+* Variance
+* Peak-related characteristics
+* Signal slope/trend
 
-These features form a **feature vector** that is used as input for the machine learning model.
+These features form the input representation used by the machine learning inference pipeline.
 
----
+### Machine Learning Inference
 
-# 6. Stress Classification Model
+The processed GSR feature vector is submitted to a machine learning inference service for physiological-state classification.
 
-### Multi-Level Stress Categorization
+The current implementation uses a binary classification stage representing:
 
-To provide a more informative stress analysis, the binary prediction results are further mapped into **four stress intensity levels** based on the magnitude and trend of the GSR signal.
+```text
+Relaxed
+Stressed
+```
 
-The system categorizes the physiological state into the following four classes:
+The application can subsequently represent the detected physiological response using multiple intensity levels for visualization and interpretation.
 
-| Class | Stress Level | Description                                                                   |
-| ----- | ------------ | ----------------------------------------------------------------------------- |
-| 0     | Relaxed      | Indicates a stable physiological state with low sympathetic nervous activity. |
-| 1     | Mid          | Represents mild stress or moderate physiological activation.                  |
-| 2     | High         | Indicates significant stress with noticeable increases in skin conductance.   |
-| 3     | Very High    | Represents strong physiological stress responses with elevated GSR values.    |
+### Interactive Visualization
 
-### Classification Workflow
+The Flutter Web interface provides graphical visualization of the acquired and processed GSR signal, allowing signal behavior to be inspected during and after acquisition.
 
-1. Raw GSR data is collected from the sensor.
-2. The signal is filtered using a **Kalman Filter**.
-3. The filtered signal is normalized.
-4. Statistical features are extracted from the signal window.
-5. The machine learning model predicts the **binary stress state**.
-6. The prediction is mapped into **four stress intensity levels**:
-   **Relaxed, Mid, High, and Very High**.
+### Session-Based Analysis
 
-This multi-level classification provides a more **granular interpretation of the user's physiological stress condition**, enabling improved monitoring and analysis.
+Measurement sessions can be stored and reviewed, allowing previous recordings and their associated analysis to be examined.
 
 ---
 
-# 7. Flutter Web Application
+## Signal Processing Pipeline
 
-The user interface and data visualization are implemented using **Flutter Web**.
+The signal-processing pipeline can be summarized as:
 
-The application runs locally on a PC using the **Chrome browser**.
+```text
+Raw GSR
+   │
+   ▼
+Noise Reduction
+(Kalman Filter)
+   │
+   ▼
+Normalization
+   │
+   ▼
+Feature Extraction
+   │
+   ├── Mean
+   ├── Standard Deviation
+   ├── Variance
+   ├── Peak Characteristics
+   └── Slope / Trend
+   │
+   ▼
+Feature Vector
+   │
+   ▼
+Machine Learning Model
+   │
+   ▼
+Physiological State
+```
 
-### Features
+### Kalman Filtering
 
-* Real-time GSR signal monitoring
-* Live chart visualization of physiological data
-* Signal filtering and processing
-* Feature extraction
-* Stress level prediction
-* Session-based stress analysis
+Physiological measurements can contain sensor noise and short-term fluctuations caused by measurement conditions and movement.
+
+A Kalman filter is used to smooth the acquired signal while preserving its overall temporal behavior.
+
+### Normalization
+
+The signal is normalized before feature analysis to provide a consistent numerical representation for downstream processing.
+
+The current implementation uses min-max normalization:
+
+```text
+x_normalized = (x - x_min) / (x_max - x_min)
+```
+
+The normalization strategy is intended to reduce scale differences between signal windows.
 
 ---
 
-# 8. Technologies Used
+## Machine Learning
 
-### Software
+The machine learning component operates on statistical characteristics extracted from processed GSR windows rather than directly using the complete raw signal.
 
-* Flutter (Web)
+### Current Classification Pipeline
+
+```text
+Processed GSR Window
+        │
+        ▼
+ Feature Extraction
+        │
+        ▼
+ Feature Vector
+        │
+        ▼
+ ML Classifier
+        │
+        ├──────────────┐
+        ▼              ▼
+    Relaxed         Stressed
+```
+
+The application layer can further interpret the physiological response using intensity categories for user-facing visualization.
+
+This distinction is intentional: the current ML stage performs the physiological-state classification, while the application layer provides a more granular interpretation for monitoring purposes.
+
+---
+
+## Hardware
+
+### Required Components
+
+| Component                          | Purpose                                      |
+| ---------------------------------- | -------------------------------------------- |
+| Arduino-compatible microcontroller | Sensor acquisition and ADC conversion        |
+| GSR sensor                         | Electrodermal activity measurement           |
+| Skin-contact electrodes            | Electrical contact with the subject          |
+| USB cable                          | Arduino-to-computer communication            |
+| Computer                           | Runs the application and processing services |
+
+### Hardware Data Flow
+
+```text
+Skin
+ │
+ ▼
+GSR Electrodes
+ │
+ ▼
+GSR Sensor
+ │
+ ▼
+Arduino ADC
+ │
+ ▼
+USB Serial
+ │
+ ▼
+Node.js
+```
+
+GSR measures changes in the electrical conductance of the skin. These changes are influenced by sweat gland activity and sympathetic nervous system activation.
+
+Because electrodermal activity is affected by multiple physiological and environmental factors, GSR should be interpreted as a measure of physiological arousal rather than as a direct measurement of psychological stress.
+
+---
+
+## Software Architecture
+
+Seren consists of several software layers.
+
+### 1. Firmware / Hardware Layer
+
+The Arduino acquires the analog GSR signal and transmits measurements through the serial interface.
+
+### 2. Communication Layer
+
+Node.js acts as the bridge between the Arduino and the Flutter application.
+
+Responsibilities include:
+
+* Serial-port communication
+* Parsing incoming sensor measurements
+* Maintaining the latest measurement
+* WebSocket communication
+* Broadcasting measurements to connected clients
+
+### 3. Application Layer
+
+Flutter Web provides:
+
+* Real-time monitoring
+* Signal visualization
+* Session management
+* Analysis interfaces
+* Communication with the inference service
+
+### 4. Machine Learning Layer
+
+The ML service receives processed signal features and returns the predicted physiological state.
+
+### 5. Storage Layer
+
+Firebase is used for session-related data storage in the application workflow.
+
+---
+
+## Technology Stack
+
+### Frontend
+
+* Flutter
 * Dart
+* Flutter Web
+* Interactive charting
+
+### Backend / Communication
+
 * Node.js
-* HTTP API communication
+* Express
+* WebSocket
+* SerialPort
+
+### Machine Learning
+
+* Python
+* Machine learning classification
+* Statistical feature extraction
+* Signal preprocessing
+
+### Data Storage
+
+* Firebase
+* Cloud Firestore
 
 ### Hardware
 
 * Arduino
-* GSR Sensor Module
+* GSR sensor
+* Skin-contact electrodes
 
-### Signal Processing
+---
 
-* Kalman Filtering
-* Data Normalization
-* Feature Extraction
+## Project Structure
 
-### Visualization
+The repository contains the Flutter application together with the local Node.js communication layer.
 
-* Interactive charts using Flutter libraries
+```text
+seren_stress_app/
+│
+├── android/                 # Android platform configuration
+├── ios/                     # iOS platform configuration
+├── linux/                   # Linux platform configuration
+├── macos/                   # macOS platform configuration
+├── windows/                 # Windows platform configuration
+├── web/                     # Flutter Web configuration
+│
+├── lib/
+│   ├── pages/               # Application screens
+│   ├── models/              # Application data models
+│   ├── utils/               # Utility and processing logic
+│   └── main.dart            # Application entry point
+│
+├── test/                    # Flutter tests
+├── Assets/                  # Application assets
+│
+├── server.js                # Arduino-to-WebSocket communication server
+├── package.json             # Node.js dependencies
+├── pubspec.yaml             # Flutter dependencies
+├── firebase.json            # Firebase configuration
+├── analysis_options.yaml    # Dart analysis configuration
+└── README.md
+```
 
+The machine learning inference component is maintained separately from the Flutter application and is accessed through an API.
 
-# 9. Installation and Setup
+---
 
-## Step 1 – Clone the Repository
+## Installation
 
-git clone https://github.com/Vishnu-V-Dev-clg/seren_stress_app.git
+### Prerequisites
 
-## Step 2 – Navigate to Project Directory
+Install the following before running Seren:
 
+* Flutter SDK
+* Dart SDK
+* Node.js
+* Arduino IDE
+* Chrome or another supported browser
+* A compatible GSR sensor
+* Arduino-compatible microcontroller
+
+Verify Flutter installation:
+
+```bash
+flutter doctor
+```
+
+Verify Node.js installation:
+
+```bash
+node --version
+npm --version
+```
+
+---
+
+## Clone the Repository
+
+```bash
+git clone https://github.com/Vishnu-V-Dev/seren_stress_app.git
 cd seren_stress_app
+```
 
-## Step 3 – Install Dependencies
+---
 
+## Install Flutter Dependencies
+
+```bash
 flutter pub get
+```
 
-## Step 4 – Run the Flutter Web Application
+---
 
+## Install Node.js Dependencies
+
+```bash
+npm install
+```
+
+---
+
+## Arduino Setup
+
+1. Connect the GSR sensor to the Arduino.
+2. Connect the Arduino to the computer using USB.
+3. Upload the sensor acquisition firmware.
+4. Identify the serial port assigned to the Arduino.
+5. Configure the Node.js communication server with the correct serial port.
+6. Ensure the Arduino transmits one sensor measurement per line.
+
+Example serial stream:
+
+```text
+512
+518
+523
+519
+527
+```
+
+The exact sensor conversion and calibration procedure depends on the GSR hardware being used.
+
+---
+
+## Start the Communication Server
+
+From the project directory:
+
+```bash
+node server.js
+```
+
+The server establishes a serial connection with the Arduino and exposes the measurements to connected WebSocket clients.
+
+The default local server configuration is:
+
+```text
+http://localhost:5000
+```
+
+The Arduino serial port must be configured according to the host system.
+
+---
+
+## Run the Flutter Application
+
+Run the web application using:
+
+```bash
 flutter run -d chrome
+```
 
-The application will open automatically in the **Chrome browser**.
-
-Note: Database Access is not included in this repo, contact authorities for the access.
-
----
-
-# 10. Applications
-
-This system can be used in several domains:
-
-* Stress monitoring systems
-* Mental health research
-* Human-computer interaction studies
-* Biomedical signal analysis
-* Wearable health technology research
+The application will launch in Chrome.
 
 ---
 
-# 11. Future Work
+## Machine Learning Service
 
-Possible improvements for the system include:
+The Flutter application communicates with a separate machine learning inference service.
 
-* Integration with wearable devices
-* More advanced machine learning models
-* Multi-sensor physiological analysis (Heart Rate, ECG, Temperature)
-* Cloud-based stress monitoring
-* Personalized stress baseline calibration
+The inference pipeline is conceptually:
+
+```text
+Flutter
+   │
+   │ HTTP
+   ▼
+ML Inference API
+   │
+   ▼
+Preprocessing
+   │
+   ▼
+Feature Vector
+   │
+   ▼
+Trained Classifier
+   │
+   ▼
+Prediction
+   │
+   ▼
+Flutter
+```
+
+The inference service must be running and accessible from the environment where the Flutter application is executed.
+
+Configuration such as API endpoints should be provided through environment-specific configuration rather than hard-coded production values.
 
 ---
 
-# 12. Conclusion
+## Experimental Protocol
 
-This project presents a **Flutter web-based stress detection system using Galvanic Skin Response signals**. The integration of physiological sensing hardware, signal processing techniques, and machine learning algorithms enables real-time stress analysis. By leveraging the cross-platform capabilities of Flutter Web, the system provides an accessible and interactive platform for monitoring physiological stress signals directly through a web browser.
+For a consistent measurement session, the following conditions are recommended:
 
-GitHub
-https://github.com/Vishnu-V-Dev-clg
+1. Place the electrodes consistently on the same measurement locations.
+2. Keep the subject relatively still during acquisition.
+3. Allow sufficient time for the sensor signal to stabilize.
+4. Record a fixed-duration signal window.
+5. Avoid changing electrode placement between sessions.
+6. Maintain consistent sampling conditions when comparing sessions.
+
+Signal quality can be affected by:
+
+* Electrode placement
+* Skin moisture
+* Temperature
+* Movement
+* Contact pressure
+* Sensor characteristics
+* Individual physiological differences
+
+Therefore, experimental consistency is important when evaluating the system.
+
+---
+
+## Limitations
+
+Seren is an experimental physiological monitoring system and has several important limitations.
+
+### GSR Is Not a Direct Stress Measurement
+
+GSR reflects electrodermal activity and sympathetic activation. Increased conductance can occur due to stress, excitement, physical activity, temperature, movement, or other forms of physiological arousal.
+
+Therefore, a GSR-based prediction should not be interpreted as a definitive psychological assessment.
+
+### Subject Variability
+
+Baseline skin conductance varies considerably between individuals. A model trained on one population may not generalize reliably to another population without appropriate validation.
+
+### Motion Artifacts
+
+Movement and changes in electrode contact can introduce artifacts into the signal.
+
+### Sensor Limitations
+
+Low-cost GSR sensors may have limited precision and stability compared with research-grade physiological acquisition equipment.
+
+### Model Generalization
+
+Machine learning performance depends on the quality, size, diversity, and labeling methodology of the training dataset.
+
+Consequently, model performance should be evaluated using appropriate subject-independent validation before making claims about generalization.
+
+---
+
+## Validation and Evaluation
+
+Future experimental evaluation should include:
+
+* Accuracy
+* Precision
+* Recall
+* F1-score
+* Confusion matrix
+* True Positive / True Negative analysis
+* False Positive / False Negative analysis
+* Subject-independent validation
+* Cross-session validation
+
+Where possible, training and evaluation data should be separated by subject rather than randomly splitting samples from the same subject across both sets. This helps reduce the risk of subject-specific information appearing in both training and testing data.
+
+---
+
+## Research Considerations
+
+For more rigorous physiological stress research, Seren can be extended beyond single-sensor GSR analysis.
+
+Potential additional physiological signals include:
+
+* Heart rate
+* Heart-rate variability
+* ECG
+* PPG
+* Skin temperature
+* Accelerometer data
+
+Multimodal physiological sensing can help distinguish stress-related responses from other causes of increased electrodermal activity.
+
+---
+
+## Future Development
+
+Planned and potential improvements include:
+
+### Personalized Baseline Calibration
+
+Establish an individual baseline before classification to account for differences in resting skin conductance.
+
+### Multimodal Physiological Sensing
+
+Integrate GSR with:
+
+* ECG
+* PPG
+* Heart-rate variability
+* Temperature
+* Motion sensors
+
+### Improved Machine Learning
+
+Evaluate alternative models and compare their performance under subject-independent validation.
+
+Potential approaches include:
+
+* Random Forest
+* Support Vector Machine
+* Gradient Boosting
+* Neural Networks
+* Temporal models
+
+### Edge Inference
+
+Move inference closer to the sensing device to reduce dependence on a remote or local server.
+
+### Wearable Integration
+
+Replace the current Arduino-based acquisition setup with a wearable platform capable of continuous physiological monitoring.
+
+### Improved Experimental Validation
+
+Expand the dataset across subjects, sessions, and controlled experimental conditions to evaluate robustness and generalization.
+
+---
+
+## Ethical and Safety Considerations
+
+Seren is intended for research, experimentation, and educational purposes.
+
+It should not be used to:
+
+* Diagnose medical conditions
+* Replace professional psychological assessment
+* Make medical decisions
+* Determine a person's mental-health status
+* Make high-stakes decisions about an individual
+
+Physiological measurements should be collected with appropriate informed consent and handled according to applicable privacy and research requirements.
+
+---
+
+## Project Status
+
+**Status:** Experimental / Academic Prototype
+
+The current system demonstrates the complete pipeline from physiological signal acquisition to real-time visualization and machine learning inference.
+
+The architecture is intended to serve as a foundation for further experimentation with signal processing, machine learning, wearable sensing, and multimodal physiological analysis.
+
+---
+
+## References and Background
+
+The project is based on concepts from electrodermal activity measurement, physiological signal processing, and machine learning-based stress recognition.
+
+Related open-source work demonstrates the use of GSR and other physiological signals for signal acquisition, feature extraction, and stress-state classification.
+
+For GSR hardware and electrodermal activity measurement concepts, see the documentation and open-source resources provided by ProtoCentral.
+
+---
+
+
+## License
+
+This project is intended for academic and experimental use.
+
+Add an explicit open-source license to the repository if redistribution, modification, or reuse is intended.
